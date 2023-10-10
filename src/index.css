@@ -1,0 +1,45 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+body {
+  @apply bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-200 font-sans antialiased 
+        h-screen w-screen flex flex-col items-center justify-center;
+}
+
+/* Add some additional styling for inner content for context */
+.content {
+  @apply bg-white shadow-md rounded-lg p-6 max-w-md w-full transition-transform duration-200;
+  transition: all 0.2s;
+}
+
+.content:hover {
+  @apply transform scale-105 shadow-xl;
+}
+/* Primary Button */
+.btn-primary {
+  @apply bg-blue-500 text-white py-2 px-6 rounded-full font-medium transition-transform duration-200 transform hover:scale-105 hover:bg-blue-600 active:scale-95;
+}
+
+/* Secondary Button */
+.btn-secondary {
+  @apply bg-gray-200 text-gray-700 py-2 px-6 rounded-full font-medium transition-transform duration-200 transform hover:scale-105 hover:bg-gray-300 active:scale-95;
+}
+.input {
+  @apply border border-gray-300 p-3 rounded-md w-full transition-shadow duration-200 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 hover:shadow-md;
+}
+.textarea {
+  @apply border border-gray-300 p-3 rounded-md w-full transition-shadow duration-200 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 hover:shadow-md;
+}
+.select-dropdown {
+  @apply relative;
+}
+
+.select-dropdown select {
+  @apply border border-gray-300 p-3 rounded-md w-full appearance-none bg-white pr-8;
+}
+
+.select-dropdown:after {
+  @apply absolute inset-y-0 right-3 block pointer-events-none;
+  content: "▾";
+}
