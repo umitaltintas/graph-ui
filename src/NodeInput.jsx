@@ -75,13 +75,8 @@ export const NodeInput = () => {
 
       <Box mt={4}>
         <Text>Nodes:</Text>
-        <HStack spacing={4}>
-          {nodes.map((node) => (
-            <Box key={node}>
-              <Text display="inline">{node},</Text>
-            </Box>
-          ))}
-        </HStack>
+        {nodes.slice(0, 10).join(", ")}
+        {nodes.length > 10 && "..."}
       </Box>
     </Box>
   );

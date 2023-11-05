@@ -42,3 +42,29 @@ export const randomNodes = (numNodes) => {
   }
   return nodes;
 };
+
+export const randomEdges = (nodes) => {
+  const ratio = 0.1;
+  const totalPossibleEdges = (nodes.length * (nodes.length - 1)) / 2;
+  const numberOfEdgesToCreate = Math.floor(totalPossibleEdges * ratio);
+  const edges = new Map();
+
+  while (edges.size < numberOfEdgesToCreate) {
+    const index1 = Math.floor(Math.random() * nodes.length);
+    const index2 = Math.floor(Math.random() * nodes.length);
+
+    if (index1 !== index2) {
+      // Create a string key for the edge that is invariant to node order
+      const key =
+        index1 < index2 ? `${index1}_${index2}` : `${index2}_${index1}`;
+
+      // If the edge isn't already in the map, add it
+      if (!edges.has(key)) {
+        edges.set(key, [nodes[index1], nodes[index2]]);
+      }
+    }
+  }
+
+  // Extract just the edges from the map
+  return Array.from(edges.values());
+};

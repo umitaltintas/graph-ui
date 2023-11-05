@@ -37,6 +37,28 @@ const graphSlice = createSlice({
       }
     },
     addEdge: (state, action) => {
+      const edgePairs = action.payload.split(",").map((edge) => {
+        return edge.split("-").map((node) => node.trim());
+      });
+      edgePairs.forEach((edgePair) => {
+        if (edgePair.length !== 2) return;
+        if (!state.nodes.includes(edgePair[0])) return;
+        if (!state.nodes.includes(edgePair[1])) return;
+        if (edgePair[0] === edgePair[1]) return;
+        if (
+          state.edges.some(
+            (edge) =>
+              (edge[0] === edgePair[0] && edge[1] === edgePair[1]) ||
+              (edge[0] === edgePair[1] && edge[1] === edgePair[0])
+          )
+        )
+          return;
+
+        state.edges = [...state.edges, edgePair];
+      });
+    },
+    addEdgeBulk: (state, action) => {
+      // , separated list of edges
       const edgePairs = action.payload
         .split(",")
         .map((edge) => edge.split("-").map((node) => node.trim()));
@@ -89,10 +111,22 @@ const graphSlice = createSlice({
     setGraphColoring: (state, action) => {
       state.graphColoring = action.payload;
     },
+    clearGraphData: (state) => {
+      state.nodes = [];
+      state.edges = [];
+      state.graphColoring = {};
+    },
   },
 });
 
-export const { addNode, removeNode, addEdge, removeEdge, setGraphColoring } =
-  graphSlice.actions;
+export const {
+  addNode,
+  removeNode,
+  addEdge,
+  removeEdge,
+  setGraphColoring,
+  addEdgeBulk,
+  clearGraphData,
+} = graphSlice.actions;
 
 export default graphSlice.reducer;

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { css } from "@emotion/react";
 import { useDispatch, useSelector } from "react-redux";
-import { setGraphColoring } from "../redux/graphSlice";
+import { setGraphColoring, clearGraphData } from "../redux/graphSlice";
 
 import {
   Alert,
@@ -40,6 +40,9 @@ function App() {
       setError("Error generating graph. Please try again.");
     }
   };
+  const clearGraph = () => {
+    dispatch(clearGraphData());
+  };
 
   return (
     <Flex
@@ -70,20 +73,33 @@ function App() {
         </Text>
         <NodeInput />
         <EdgeInput />
-        <Button
-          className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
-          onClick={generateGraph}
-          width={["100%", "50%", "40%", "30%"]}
-        >
-          Generate Graph
-        </Button>
+        <HStack spacing={4} width="full">
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
+            onClick={generateGraph}
+            width={{ base: "100%", sm: "auto" }} // 100% width on smallest screens, auto on larger screens
+            flexGrow={{ sm: 1 }} // The buttons will grow to fill the space on larger screens
+          >
+            Generate Graph
+          </Button>
+          {/* New Clear Graph button */}
+          <Button
+            className="bg-red-500 hover:bg-red-600 text-white transition duration-300 ease-in-out"
+            onClick={clearGraph}
+            width={{ base: "100%", sm: "auto" }} // 100% width on smallest screens, auto on larger screens
+            flexGrow={{ sm: 1 }} // The buttons will grow to fill the space on larger screens
+            ml={4} // Add some left margin for spacing
+          >
+            Clear Graph
+          </Button>
+        </HStack>
         {nodes.length === 0 ? (
           <Text mt={4}>No data available for graphs.</Text>
         ) : (
           <HStack spacing={6} mt={6}>
             <GraphBox title="Original Graph" />
             {Object.keys(graphColoring).length > 0 && (
-              <GraphBox title="Colored Graph" graphColoring={graphColoring} />
+              <GraphBox title="Colored Graph" colorEnabled={true} />
             )}
           </HStack>
         )}
@@ -98,12 +114,12 @@ function App() {
   );
 }
 
-const GraphBox = ({ title }) => (
+const GraphBox = ({ title, colorEnabled = false }) => (
   <Box>
     <Text fontSize="lg" fontWeight="bold" mb={4}>
       {title}
     </Text>
-    <GraphSVG />
+    <GraphSVG colorEnabled={colorEnabled} />
   </Box>
 );
 

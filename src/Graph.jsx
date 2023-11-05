@@ -39,7 +39,7 @@ function useDraggable() {
   };
 }
 
-const GraphSVG = () => {
+const GraphSVG = ({ colorEnabled }) => {
   const dispatch = useDispatch();
   const nodes = useSelector((state) => state.graph.nodes);
   const edges = useSelector((state) => state.graph.edges);
@@ -51,6 +51,14 @@ const GraphSVG = () => {
     return () => console.log("Component will unmount");
   }, []);
 
+  const isSameColor = useCallback(
+    (node1, node2) => {
+      const color1 = graphColoring[node1];
+      const color2 = graphColoring[node2];
+      return color1 !== undefined && color1 === color2;
+    },
+    [graphColoring]
+  );
   const {
     isDragging,
     startNode,
@@ -142,6 +150,8 @@ const GraphSVG = () => {
           nodes.length,
           radius
         );
+        // Check if the nodes at the ends of the edge have the same color
+        const sameColor = isSameColor(edge[0], edge[1]);
         return (
           <line
             key={`edge-${index}`}
@@ -149,7 +159,7 @@ const GraphSVG = () => {
             y1={startNodePosition.y}
             x2={endNodePosition.x}
             y2={endNodePosition.y}
-            stroke="black"
+            stroke={colorEnabled && sameColor ? "red" : "black"} // Here we use red if the nodes have the same color and color is enabled, otherwise black
           />
         );
       })}
@@ -204,7 +214,7 @@ const GraphSVG = () => {
               cx={position.x}
               cy={position.y}
               r="10"
-              fill={nodeColor}
+              fill={(colorEnabled && nodeColor) || "white"}
               pointerEvents="all"
               stroke={
                 isDragging && startNode !== node && !hasEdge(startNode, node)

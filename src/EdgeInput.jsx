@@ -2,11 +2,12 @@
 import { Box, Button, HStack, Input, Text } from "@chakra-ui/react";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addEdge, removeEdge } from "./redux/graphSlice";
+import { addEdge, addEdgeBulk, removeEdge } from "./redux/graphSlice";
+import { randomEdges } from "./utils/graphUtils";
 export const EdgeInput = () => {
   const dispatch = useDispatch();
   const edges = useSelector((state) => state.graph.edges);
-
+  const nodes = useSelector((state) => state.graph.nodes);
   const [newEdges, setNewEdges] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const addEdges = () => {
@@ -15,6 +16,13 @@ export const EdgeInput = () => {
   const removeEdges = () => {
     dispatch(removeEdge(newEdges));
   };
+
+  const generateRandomEdges = () => {
+    const newEdges = randomEdges(nodes);
+    const newEdgesString = newEdges.map((edge) => edge.join("-")).join(",");
+    dispatch(addEdgeBulk(newEdgesString));
+  };
+
   return (
     <Box>
       <Text fontSize="xl" fontWeight="bold" marginBottom="8px">
@@ -53,6 +61,12 @@ export const EdgeInput = () => {
           >
             Remove Edges
           </Button>
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
+            onClick={generateRandomEdges}
+          >
+            Random Edges
+          </Button>
         </HStack>
       </form>
 
@@ -65,13 +79,13 @@ export const EdgeInput = () => {
       <Box mt={4}>
         <Text>Edges:</Text>
         <HStack spacing={4}>
-          {edges.map((edge) => (
-            <Box key={`${edge[0]}-${edge[1]}`}>
-              <Text display="inline">
-                ({edge[0]},{edge[1]})
-              </Text>
-            </Box>
-          ))}
+          <Text>
+            {edges
+              .slice(0, 10)
+              .map((edge) => edge.join("-"))
+              .join(", ")}
+          </Text>
+          {edges.length > 10 && <Text>...</Text>}
         </HStack>
       </Box>
     </Box>
