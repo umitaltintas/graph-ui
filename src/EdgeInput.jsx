@@ -1,19 +1,20 @@
-import { CloseIcon } from "@chakra-ui/icons";
-import {
-  Box,
-  Button,
-  HStack,
-  Input,
-  Text,
-  Tooltip,
-  IconButton,
-} from "@chakra-ui/react";
-import React, { useState } from "react";
+/* eslint-disable react/prop-types */
+import { Box, Button, HStack, Input, Text } from "@chakra-ui/react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addEdge, removeEdge } from "./redux/graphSlice";
+export const EdgeInput = () => {
+  const dispatch = useDispatch();
+  const edges = useSelector((state) => state.graph.edges);
 
-export const EdgeInput = ({ edges, addEdges, removeEdges }) => {
   const [newEdges, setNewEdges] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
+  const addEdges = () => {
+    dispatch(addEdge(newEdges));
+  };
+  const removeEdges = () => {
+    dispatch(removeEdge(newEdges));
+  };
   return (
     <Box>
       <Text fontSize="xl" fontWeight="bold" marginBottom="8px">

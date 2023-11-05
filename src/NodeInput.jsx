@@ -1,54 +1,25 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  HStack,
-  Input,
-  Text,
-  Tooltip,
-  IconButton,
-} from "@chakra-ui/react";
-import { CloseIcon } from "@chakra-ui/icons";
-
-export const NodeInput = ({ nodes = [], setNodes, edges = [], setEdges }) => {
+import { Box, Button, HStack, Input, Text } from "@chakra-ui/react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addNode, removeNode } from "./redux/graphSlice";
+import { randomNodes } from "./utils/graphUtils";
+export const NodeInput = () => {
   const [newNodes, setNewNodes] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const dispatch = useDispatch();
+  const nodes = useSelector((state) => state.graph.nodes);
 
   const addNodes = () => {
-    const nodesToAdd = newNodes
-      .split(",")
-      .map((node) => node.trim())
-      .filter((node) => node && !nodes.includes(node));
-
-    if (nodesToAdd.length > 0) {
-      setNodes([...nodes, ...nodesToAdd]);
-      setNewNodes("");
-    }
+    dispatch(addNode(newNodes));
   };
 
   const removeNodes = () => {
-    const nodesToRemove = newNodes
-      .split(",")
-      .map((node) => node.trim())
-      .filter((node) => nodes.includes(node));
+    dispatch(removeNode(newNodes));
+  };
 
-    if (nodesToRemove.length > 0) {
-      const updatedNodes = nodes.filter(
-        (node) => !nodesToRemove.includes(node)
-      );
-      const updatedEdges = edges.filter(
-        (edge) =>
-          !nodesToRemove.includes(edge[0]) && !nodesToRemove.includes(edge[1])
-      );
-
-      setNodes(updatedNodes);
-      setEdges(updatedEdges);
-      setNewNodes("");
-    } else {
-      setErrorMessage(
-        "Node(s) not found. Please ensure you've entered the correct node names to remove."
-      );
-    }
+  const generateRandomNodes = () => {
+    const nodes = randomNodes(newNodes);
+    dispatch(addNode(nodes.join(",")));
   };
 
   return (
@@ -84,6 +55,14 @@ export const NodeInput = ({ nodes = [], setNodes, edges = [], setEdges }) => {
             onClick={removeNodes}
           >
             Remove Nodes
+          </Button>
+
+          {/* button for random nodes */}
+          <Button
+            className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
+            onClick={generateRandomNodes}
+          >
+            Random Nodes
           </Button>
         </HStack>
       </form>

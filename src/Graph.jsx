@@ -1,100 +1,98 @@
-import React, { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { addEdge } from "./redux/graphSlice";
+import { hsvToRgb } from "./utils/colorUtils"; // Assume we've extracted the color conversion to a utility file.
+import { calculatePosition, isCloseEnough } from "./utils/graphUtils"; // Extract the positioning and proximity check logic.
 
-const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
-  const radius = 150;
-
-  // Convert HSV to RGB
-  function hsvToRgb(h, s, v) {
-    let r, g, b;
-    let i;
-    let f, p, q, t;
-    if (arguments.length === 1) {
-      (s = h.s), (v = h.v), (h = h.h);
-    }
-    i = Math.floor(h * 6);
-    f = h * 6 - i;
-    p = v * (1 - s);
-    q = v * (1 - f * s);
-    t = v * (1 - (1 - f) * s);
-    switch (i % 6) {
-      case 0:
-        (r = v), (g = t), (b = p);
-        break;
-      case 1:
-        (r = q), (g = v), (b = p);
-        break;
-      case 2:
-        (r = p), (g = v), (b = t);
-        break;
-      case 3:
-        (r = p), (g = q), (b = v);
-        break;
-      case 4:
-        (r = t), (g = p), (b = v);
-        break;
-      case 5:
-        (r = v), (g = p), (b = q);
-        break;
-    }
-    return {
-      r: Math.round(r * 255),
-      g: Math.round(g * 255),
-      b: Math.round(b * 255),
-    };
-  }
-  const totalColors = graphColoring
-    ? Object.keys(graphColoring).reduce((acc, key) => {
-        return Math.max(acc, graphColoring[key]);
-      }, 0) + 1
-    : 0;
-  const hasEdge = (node1, node2) => {
-    return edges.some(
-      (edge) =>
-        (edge[0] === node1 && edge[1] === node2) ||
-        (edge[0] === node2 && edge[1] === node1)
-    );
-  };
-  const getColor = (index) => {
-    if (totalColors === 0) return "white"; // Return white if no colors are defined
-    const hue = index / totalColors;
-    const rgb = hsvToRgb(hue, 1, 1);
-    return `rgb(${rgb.r},${rgb.g},${rgb.b})`;
-  };
-
-  const calculatePosition = (index, total) => {
-    const angle = (index / total) * 2 * Math.PI;
-    return {
-      x: 200 + radius * Math.cos(angle),
-      y: 200 + radius * Math.sin(angle),
-    };
-  };
-
-  // State to track potential end node during dragging
-  const [potentialEndNode, setPotentialEndNode] = useState(null);
-
-  const isCloseEnough = (point1, point2, distance) => {
-    return (
-      Math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2) <=
-      distance
-    );
-  };
-
+// Custom hook to manage dragging state.
+function useDraggable() {
   const [isDragging, setIsDragging] = useState(false);
   const [startNode, setStartNode] = useState(null);
   const [endPosition, setEndPosition] = useState({ x: 0, y: 0 });
+  const [potentialEndNode, setPotentialEndNode] = useState(null);
 
-  const handleMouseDown = (node) => {
+  const startDrag = (node) => {
     setIsDragging(true);
     setStartNode(node);
   };
 
-  const handleMouseUp = (node) => {
-    if (isDragging && startNode && node !== startNode) {
-      onAddEdge([startNode, node]);
-    }
+  const endDrag = (node) => {
     setIsDragging(false);
     setStartNode(null);
     setEndPosition({ x: 0, y: 0 });
+    return node;
+  };
+
+  const drag = (position) => {
+    setEndPosition(position);
+  };
+
+  return {
+    isDragging,
+    startNode,
+    endPosition,
+    potentialEndNode,
+    setPotentialEndNode,
+    startDrag,
+    endDrag,
+    drag,
+  };
+}
+
+const GraphSVG = () => {
+  const dispatch = useDispatch();
+  const nodes = useSelector((state) => state.graph.nodes);
+  const edges = useSelector((state) => state.graph.edges);
+  const graphColoring = useSelector((state) => state.graph.graphColoring);
+  const radius = 150;
+
+  useEffect(() => {
+    console.log("Component mounted");
+    return () => console.log("Component will unmount");
+  }, []);
+
+  const {
+    isDragging,
+    startNode,
+    endPosition,
+    potentialEndNode,
+    setPotentialEndNode,
+    startDrag,
+    endDrag,
+    drag,
+  } = useDraggable();
+
+  const totalColors = graphColoring
+    ? Math.max(...Object.values(graphColoring)) + 1
+    : 0;
+
+  const getColor = useCallback(
+    (index) => {
+      if (totalColors === 0) return "white";
+      const hue = index / totalColors;
+      const rgb = hsvToRgb(hue, 1, 1);
+      return `rgb(${rgb.r},${rgb.g},${rgb.b})`;
+    },
+    [totalColors]
+  );
+
+  const hasEdge = useCallback(
+    (node1, node2) =>
+      edges.some(
+        (edge) =>
+          (edge[0] === node1 && edge[1] === node2) ||
+          (edge[0] === node2 && edge[1] === node1)
+      ),
+    [edges]
+  );
+
+  const handleMouseDown = (node) => startDrag(node);
+
+  const handleMouseUp = (node) => {
+    const endNode = endDrag(node);
+    if (isDragging && startNode && node !== startNode) {
+      dispatch(addEdge(`${startNode}-${endNode}`));
+    }
   };
 
   const handleMouseMove = (e) => {
@@ -104,14 +102,12 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
         x: e.clientX - svgRect.left,
         y: e.clientY - svgRect.top,
       };
-      setEndPosition(currentPos);
-
+      drag(currentPos);
       // Check if the current position is close enough to any node
       const closeNode = nodes.find((node, index) => {
-        const nodePos = calculatePosition(index, nodes.length);
+        const nodePos = calculatePosition(index, nodes.length, radius);
         return isCloseEnough(currentPos, nodePos, 30);
       });
-
       setPotentialEndNode(closeNode || null);
     }
   };
@@ -122,7 +118,7 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
       height="400"
       viewBox="0 0 400 400"
       onMouseMove={handleMouseMove}
-      onMouseUp={() => setIsDragging(false)}
+      onMouseUp={endDrag}
     >
       <defs>
         <radialGradient id="graphGradient" cx="0.5" cy="0.5" r="0.5">
@@ -135,19 +131,24 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
       <rect width="400" height="400" fill="url(#graphGradient)" />
 
       {/* Drawing edges */}
-      {edges.map((edge) => {
-        const startNode = calculatePosition(
+      {edges.map((edge, index) => {
+        const startNodePosition = calculatePosition(
           nodes.indexOf(edge[0]),
-          nodes.length
+          nodes.length,
+          radius
         );
-        const endNode = calculatePosition(nodes.indexOf(edge[1]), nodes.length);
+        const endNodePosition = calculatePosition(
+          nodes.indexOf(edge[1]),
+          nodes.length,
+          radius
+        );
         return (
           <line
-            key={`edge-${edge[0]}-${edge[1]}`}
-            x1={startNode.x}
-            y1={startNode.y}
-            x2={endNode.x}
-            y2={endNode.y}
+            key={`edge-${index}`}
+            x1={startNodePosition.x}
+            y1={startNodePosition.y}
+            x2={endNodePosition.x}
+            y2={endNodePosition.y}
             stroke="black"
           />
         );
@@ -156,18 +157,28 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
       {/* Dynamic edge while dragging */}
       {isDragging && startNode && (
         <line
-          x1={calculatePosition(nodes.indexOf(startNode), nodes.length).x}
-          y1={calculatePosition(nodes.indexOf(startNode), nodes.length).y}
+          x1={
+            calculatePosition(nodes.indexOf(startNode), nodes.length, radius).x
+          }
+          y1={
+            calculatePosition(nodes.indexOf(startNode), nodes.length, radius).y
+          }
           x2={
             potentialEndNode
-              ? calculatePosition(nodes.indexOf(potentialEndNode), nodes.length)
-                  .x
+              ? calculatePosition(
+                  nodes.indexOf(potentialEndNode),
+                  nodes.length,
+                  radius
+                ).x
               : endPosition.x
           }
           y2={
             potentialEndNode
-              ? calculatePosition(nodes.indexOf(potentialEndNode), nodes.length)
-                  .y
+              ? calculatePosition(
+                  nodes.indexOf(potentialEndNode),
+                  nodes.length,
+                  radius
+                ).y
               : endPosition.y
           }
           stroke="black"
@@ -177,7 +188,7 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
 
       {/* Drawing nodes and node labels */}
       {nodes.map((node, index) => {
-        const position = calculatePosition(index, nodes.length);
+        const position = calculatePosition(index, nodes.length, radius);
         const nodeColor =
           graphColoring && graphColoring[node]
             ? getColor(graphColoring[node])
@@ -190,13 +201,11 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
             onMouseUp={() => handleMouseUp(potentialEndNode || node)}
           >
             <circle
-              key={`node-${node}`}
               cx={position.x}
               cy={position.y}
               r="10"
               fill={nodeColor}
               pointerEvents="all"
-              // Colorize only if dragging and it's not the start node and there's no existing edge
               stroke={
                 isDragging && startNode !== node && !hasEdge(startNode, node)
                   ? "blue"
@@ -205,14 +214,13 @@ const GraphSVG = ({ nodes, edges, graphColoring, onAddEdge }) => {
               strokeWidth="3"
             />
             <text
-              key={`node-label-${node}`}
               x={position.x}
               y={position.y}
               dy="4"
               fill="black"
               fontSize="12"
               textAnchor="middle"
-              pointerEvents="bounding-box" // This makes sure the drag starts even when clicking on the empty space inside the text bounding box
+              pointerEvents="bounding-box"
             >
               {node}
             </text>
