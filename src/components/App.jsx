@@ -1,10 +1,4 @@
 /* eslint-disable react/prop-types */
-import React, { useState } from "react";
-import axios from "axios";
-import { css } from "@emotion/react";
-import { useDispatch, useSelector } from "react-redux";
-import { setGraphColoring, clearGraphData } from "../redux/graphSlice";
-
 import {
   Alert,
   AlertIcon,
@@ -12,18 +6,28 @@ import {
   Button,
   Flex,
   HStack,
+  Input,
   Text,
   VStack,
 } from "@chakra-ui/react";
-
+import { css } from "@emotion/react";
+import axios from "axios";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { EdgeInput } from "../EdgeInput";
 import GraphSVG from "../Graph";
 import { NodeInput } from "../NodeInput";
+import {
+  clearGraphData,
+  setGraphColoring,
+  setThreshold,
+} from "../redux/graphSlice";
 
 function App() {
   const dispatch = useDispatch();
   const edges = useSelector((state) => state.graph.edges);
   const nodes = useSelector((state) => state.graph.nodes);
+  const threshold = useSelector((state) => state.graph.threshold);
   const graphColoring = useSelector((state) => state.graph.graphColoring);
   const [error, setError] = useState(null);
 
@@ -31,7 +35,7 @@ function App() {
     try {
       const response = await axios.post(
         "https://graph-be-umitaltintas.vercel.app/generate_graph",
-        { nodes, edges }
+        { nodes, edges, threshold }
       );
       dispatch(setGraphColoring(response.data.coloring));
       setError(null);
@@ -42,6 +46,10 @@ function App() {
   };
   const clearGraph = () => {
     dispatch(clearGraphData());
+  };
+
+  const setThresholdValue = (value) => {
+    dispatch(setThreshold(value));
   };
 
   return (
@@ -73,6 +81,20 @@ function App() {
         </Text>
         <NodeInput />
         <EdgeInput />
+        {/* defect treshhold input */}
+        <Text fontSize="xl" fontWeight="bold" marginBottom="8px">
+          Defect Treshold : {threshold}
+        </Text>
+        <Input
+          className="dark:bg-gray-100 dark:text-gray-800 px-1 light:bg-gray-800 light:text-gray-100 border-gray-300 border-2 rounded-md"
+          placeholder="Defect Treshold"
+          type="number"
+          width={["100%", "80%", "70%", "400px"]}
+          value={threshold}
+          onChange={(e) => {
+            setThresholdValue(e.target.value);
+          }}
+        />
         <HStack spacing={4} width="full">
           <Button
             className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
