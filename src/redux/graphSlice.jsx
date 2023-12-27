@@ -7,6 +7,8 @@ const graphSlice = createSlice({
     edges: [],
     graphColoring: {},
     threshold: 0,
+    version: 1,
+    numColors: 0,
   },
   reducers: {
     addNode: (state, action) => {
@@ -111,15 +113,22 @@ const graphSlice = createSlice({
     setThreshold: (state, action) => {
       state.threshold = action.payload;
     },
+    setNumColors: (state, action) => {
+      state.numColors = action.payload;
+    },
 
     setGraphColoring: (state, action) => {
       state.graphColoring = action.payload;
+    },
+    setVersion: (state, action) => {
+      state.version = action.payload;
     },
     clearGraphData: (state) => {
       state.nodes = [];
       state.edges = [];
       state.graphColoring = {};
       state.threshold = 0;
+      state.version = 1;
     },
   },
 });
@@ -133,6 +142,8 @@ export const {
   addEdgeBulk,
   clearGraphData,
   setThreshold,
+  setVersion,
+  setNumColors,
 } = graphSlice.actions;
 
 export default graphSlice.reducer;

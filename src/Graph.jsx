@@ -44,6 +44,7 @@ const GraphSVG = ({ colorEnabled }) => {
   const nodes = useSelector((state) => state.graph.nodes);
   const edges = useSelector((state) => state.graph.edges);
   const graphColoring = useSelector((state) => state.graph.graphColoring);
+  const numColors = useSelector((state) => state.graph.numColors);
   const radius = 150;
 
   useEffect(() => {
@@ -237,6 +238,17 @@ const GraphSVG = ({ colorEnabled }) => {
           </g>
         );
       })}
+      {colorEnabled && (
+        <text
+          x="0" // Adjust as needed for positioning
+          y="20" // Adjust as needed for positioning
+          fill="black"
+          fontSize="16"
+          fontWeight="bold"
+        >
+          {`Colors: ${numColors}`}
+        </text>
+      )}
     </svg>
   );
 };

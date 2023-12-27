@@ -7,6 +7,7 @@ import {
   Flex,
   HStack,
   Input,
+  Select,
   Text,
   VStack,
 } from "@chakra-ui/react";
@@ -20,7 +21,9 @@ import { NodeInput } from "../NodeInput";
 import {
   clearGraphData,
   setGraphColoring,
+  setNumColors,
   setThreshold,
+  setVersion,
 } from "../redux/graphSlice";
 
 function App() {
@@ -28,6 +31,7 @@ function App() {
   const edges = useSelector((state) => state.graph.edges);
   const nodes = useSelector((state) => state.graph.nodes);
   const threshold = useSelector((state) => state.graph.threshold);
+  const version = useSelector((state) => state.graph.version);
   const graphColoring = useSelector((state) => state.graph.graphColoring);
   const [error, setError] = useState(null);
 
@@ -35,9 +39,11 @@ function App() {
     try {
       const response = await axios.post(
         "https://graph-be-umitaltintas.vercel.app/generate_graph",
-        { nodes, edges, threshold }
+        { nodes, edges, version, threshold }
       );
+      console.log("response", response);
       dispatch(setGraphColoring(response.data.coloring));
+      dispatch(setNumColors(response.data.num_colors));
       setError(null);
     } catch (err) {
       console.error("Error generating graph:", err);
@@ -50,6 +56,10 @@ function App() {
 
   const setThresholdValue = (value) => {
     dispatch(setThreshold(value));
+  };
+
+  const setVersionValue = (value) => {
+    dispatch(setVersion(value));
   };
 
   return (
@@ -95,6 +105,21 @@ function App() {
             setThresholdValue(e.target.value);
           }}
         />
+        {/* alg version select */}
+        <Text fontSize="xl" fontWeight="bold" marginBottom="8px">
+          Algorithm Version
+        </Text>
+        <Select
+          className="dark:bg-gray-100 dark:text-gray-800 px-1 light:bg-gray-800 light:text-gray-100 border-gray-300 border-2 rounded-md"
+          value={version}
+          onChange={(e) => {
+            setVersionValue(e.target.value);
+          }}
+        >
+          <option value="1">Version 1</option>
+          <option value="2">Version 2</option>
+          <option value="3">Version 3</option>
+        </Select>
         <HStack spacing={4} width="full">
           <Button
             className="bg-green-500 hover:bg-green-600 text-white transition duration-300 ease-in-out"
